@@ -72,7 +72,7 @@ public class WebLogicServerControl {
     public boolean isServerRunning() {
         Socket socket = null;
         try {
-            socket = new Socket(configuration.getAdminListenAddress(), configuration.getAdminListenPort());
+            socket = new Socket(configuration.getListenAddress(), configuration.getListenPort());
         } catch (Exception ignored) {
             return false;
         } finally {
@@ -153,7 +153,7 @@ public class WebLogicServerControl {
     }
 
     /**
-     * The command implementation for starting a new WebLogic Server process.
+     * The command implementation for starting a new WebLogic Admin Server process.
      * Execute the startWebLogic script in the domainHome/bin directory by default.
      * 
      * @author Vineet Reynolds
@@ -200,6 +200,8 @@ public class WebLogicServerControl {
                 throw new LifecycleException("Container startup failed.", ex);
             }
         }
+
+
 
       private Process startServer(ProcessBuilder processBuilder ) throws InterruptedException, IOException {
         Process process = processBuilder.start();

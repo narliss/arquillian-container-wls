@@ -27,10 +27,14 @@ import org.jboss.arquillian.container.spi.ConfigurationException;
  */
 public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfiguration {
 
-    private static final String DEFAULT_WIN_STARTUP_SCRIPT = "bin\\\\startWebLogic.cmd";
-    private static final String DEFAULT_LINUX_STARTUP_SCRIPT = "./bin/startWebLogic.sh";
-    private static final String DEFAULT_WIN_SHUTDOWN_SCRIPT = "bin\\\\stopWebLogic.cmd";
-    private static final String DEFAULT_LINUX_SHUTDOWN_SCRIPT = "./bin/stopWebLogic.sh";
+    private static final String DEFAULT_WIN_ADMINSTARTUP_SCRIPT = "bin\\\\startWebLogic.cmd";
+    private static final String DEFAULT_WIN_STARTUP_SCRIPT      = "bin\\\\startManagedWeblogic.cmd";
+    private static final String DEFAULT_LINUX_ADMINSTARTUP_SCRIPT = "./bin/startWebLogic.sh";
+    private static final String DEFAULT_LINUX_STARTUP_SCRIPT = "./bin/startManagedWebLogic.sh";
+    private static final String DEFAULT_WIN_ADMINSHUTDOWN_SCRIPT = "bin\\\\stopWebLogic.cmd";
+    private static final String DEFAULT_WIN_SHUTDOWN_SCRIPT = "bin\\\\stopManagedWebLogic.cmd";
+    private static final String DEFAULT_LINUX_ADMINSHUTDOWN_SCRIPT = "./bin/stopWebLogic.sh";
+    private static final String DEFAULT_LINUX_SHUTDOWN_SCRIPT = "./bin/stopManagedWebLogic.sh";
 
     private String middlewareHome = System.getenv("MW_HOME");
     private String domainDirectory;
@@ -40,6 +44,7 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
     private boolean allowConnectingToRunningServer = false;
     private String startServerScript;
     private String stopServerScript;
+    private String serverName;
 
     public CommonManagedWebLogicConfiguration() {
         super();
@@ -52,25 +57,47 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
         Validate.directoryExists(domainDirectory, "The domainDirectory resolved to " + domainDirectory
                 + " and could not be located. Verify the property in arquillian.xml");
         if (startServerScript != null && startServerScript.length() > 0) {
-            Validate.isValidFile(startServerScript, "The startServerScript resolved to " + startServerScript
-                    + " and could not be located. Verify the property in arquillian.xml");
+            Validate.isValidScript(startServerScript, "The startServerScript " + startServerScript
+                    + " could not be located. Verify the property in arquillian.xml");
         } else {
             String os = System.getProperty("os.name").toLowerCase();
             if (os.startsWith("windows")) {
-                startServerScript = DEFAULT_WIN_STARTUP_SCRIPT;
+                if (isAdminServer()) {
+                    startServerScript = DEFAULT_WIN_ADMINSTARTUP_SCRIPT;
+                }
+                else {
+                    startServerScript = DEFAULT_WIN_STARTUP_SCRIPT + " " + getServerName() + " " + getAdminUrl();
+                }
             } else {
-                startServerScript = DEFAULT_LINUX_STARTUP_SCRIPT;
+                if (isAdminServer()) {
+                    startServerScript = DEFAULT_LINUX_ADMINSTARTUP_SCRIPT;
+                }
+                else {
+                    startServerScript = DEFAULT_LINUX_STARTUP_SCRIPT + " " + getServerName() + " " + getAdminUrl();
+                }
             }
         }
         if (stopServerScript != null && stopServerScript.length() > 0) {
-            Validate.isValidFile(stopServerScript, "The stopServerScript resolved to " + stopServerScript
-                    + " and could not be located. Verify the property in arquillian.xml");
+            Validate.isValidScript(stopServerScript, "The stopServerScript " + stopServerScript
+                    + " could not be located. Verify the property in arquillian.xml");
         } else {
             String os = System.getProperty("os.name").toLowerCase();
             if (os.startsWith("windows")) {
-                stopServerScript = DEFAULT_WIN_SHUTDOWN_SCRIPT;
+                if (isAdminServer()) {
+                    stopServerScript = DEFAULT_WIN_ADMINSHUTDOWN_SCRIPT;
+                }
+                else {
+                    stopServerScript = DEFAULT_WIN_SHUTDOWN_SCRIPT + " " + getServerName() + " t3://" + getListenAddress()
+                            + ":" + getListenPort();
+                }
             } else {
-                stopServerScript = DEFAULT_LINUX_SHUTDOWN_SCRIPT;
+                if (isAdminServer()) {
+                    stopServerScript = DEFAULT_LINUX_ADMINSHUTDOWN_SCRIPT;
+                }
+                else {
+                    stopServerScript = DEFAULT_LINUX_SHUTDOWN_SCRIPT + " " + getServerName() + " t3://" + getListenAddress()
+                            + ":" + getListenPort();
+                }
             }
         }
         super.validate();
@@ -179,4 +206,21 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
         this.stopServerScript = stopServerScript;
     }
 
+    /**
+     * Set the name of the managed server.
+     *
+     * @param serverName  the managed server name
+     */
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
+
+    /**
+     * Return the name of the managed server.
+     *
+     * @return  the name of the managed server
+     */
+    public String getServerName() {
+        return serverName;
+    }
 }

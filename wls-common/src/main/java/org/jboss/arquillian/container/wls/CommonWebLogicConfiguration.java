@@ -44,6 +44,10 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
    private String adminListenAddress;
 
    private int adminListenPort;
+
+   private String listenAddress;
+
+   private int listenPort;
    
    private String adminUserName;
    
@@ -82,6 +86,8 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
    private String classPath;
    
    private boolean useURandom;
+
+   private boolean adminServer = true;
    
    public void validate() throws ConfigurationException
    {
@@ -107,9 +113,17 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
       try
       {
          URI adminURI = new URI(adminUrl);
+
          adminProtocol = adminURI.getScheme();
          adminListenAddress = adminURI.getHost();
          adminListenPort = adminURI.getPort();
+
+         // ensure backward compatibility for admin server only configurations
+         if (isAdminServer()) {
+             listenAddress = adminListenAddress;
+             listenPort = adminListenPort;
+         }
+
          Validate.notNullOrEmpty(adminProtocol, "The adminProtocol is empty. Verify the adminUrl and adminProtocol properties in arquillian.xml");
          Validate.isInList(adminProtocol, new String[]
                {"t3", "t3s", "http", "https", "iiop", "iiops"},
@@ -515,4 +529,37 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
       this.useURandom = useURandom;
    }
 
+    public String getListenAddress() {
+        return listenAddress;
+    }
+
+    public int getListenPort() {
+        return listenPort;
+    }
+
+    public void setListenAddress(String listenAddress) {
+        this.listenAddress = listenAddress;
+    }
+
+    public void setListenPort(int listenPort) {
+        this.listenPort = listenPort;
+    }
+
+    /**
+     * Return whether the configured server is an admin server.
+     *
+     * @return true if the configured server is an admin server
+     */
+    public boolean isAdminServer() {
+        return adminServer;
+    }
+
+    /**
+     * Set whether the configured server is an admin server.
+     *
+     * @param adminServer true if the configured server is an admin server
+     */
+    public void setAdminServer(boolean adminServer) {
+        this.adminServer = adminServer;
+    }
 }
