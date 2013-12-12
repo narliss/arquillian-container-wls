@@ -77,6 +77,10 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
                 }
             }
         }
+        // Note: Arquillian starts and stops servers in the order they're specified in a group. This means that if
+        // you're working with multiple servers in arquillian the admin server needs to come first for startup to work
+        // and therefore it will be shutdown first. With Weblogic you can shutdown a managed server without an admin
+        // server by running: stopManagedWebLogic <servername> t3://<listenaddress>:<port> <adminUser> <adminPassword>
         if (stopServerScript != null && stopServerScript.length() > 0) {
             Validate.isValidScript(stopServerScript, "The stopServerScript " + stopServerScript
                     + " could not be located. Verify the property in arquillian.xml");

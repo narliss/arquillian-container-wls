@@ -201,8 +201,6 @@ public class WebLogicServerControl {
             }
         }
 
-
-
       private Process startServer(ProcessBuilder processBuilder ) throws InterruptedException, IOException {
         Process process = processBuilder.start();
         Thread consoleConsumer = new Thread(new ConsoleConsumer(process, configuration.isOutputToConsole()));

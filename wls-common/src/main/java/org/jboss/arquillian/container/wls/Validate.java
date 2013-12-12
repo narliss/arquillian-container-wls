@@ -103,8 +103,8 @@ public final class Validate {
     }
 
     /**
-     * A start script may have parameters included. This will validate that the start script file exists expecting
-     * that it is a space delimited string with the first token being the script
+     * Validates the existence of the provided script file location. This method takes into account the possibility
+     * of script parameters being included in the script string.
      *
      * @param script The script to test
      * @param message The exception message
@@ -113,7 +113,11 @@ public final class Validate {
     public static void isValidScript(final String script, final String message) throws IllegalArgumentException {
         if (script.contains(" "))
         {
-            isValidFile(script.substring(0,script.indexOf(' ')), message);
+            isValidFile(script.substring(0, script.indexOf(' ')), message);
+        }
+        else
+        {
+            isValidFile(script, message);
         }
     }
 
