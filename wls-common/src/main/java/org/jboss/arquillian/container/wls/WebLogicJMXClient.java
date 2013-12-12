@@ -20,11 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import javax.management.*;
@@ -295,11 +291,23 @@ public class WebLogicJMXClient
       ObjectName domainRuntime = null;
       domainRuntime = (ObjectName) connection.getAttribute(domainRuntimeService, "DomainRuntime");
       ObjectName deploymentManager = (ObjectName) connection.getAttribute( domainRuntime, "DeploymentManager");
+      String target = configuration.getTarget();
+
+      Properties props = new Properties();
+      props.setProperty("stageMode", "stage");
 
       ObjectName deploymentProgressObject = (ObjectName) connection.invoke( deploymentManager,
                                                                             "deploy",
-                                                                            new Object[] {deploymentName, deploymentArchive.getAbsolutePath(), null},
-                                                                            new String[] {String.class.getName(), String.class.getName(), String.class.getName()});
+                                                                            new Object[] {deploymentName,
+                                                                                    deploymentArchive.getAbsolutePath(),
+                                                                                    new String[] {target},
+                                                                                    null,
+                                                                                    props},
+                                                                            new String[] {String.class.getName(),
+                                                                                    String.class.getName(),
+                                                                                    String[].class.getName(),
+                                                                                    String.class.getName(),
+                                                                                    Properties.class.getName()});
       processDeploymentProgress( deploymentName, deploymentManager, deploymentProgressObject);
     } catch (DeploymentException e) {
       throw e;
@@ -561,7 +569,13 @@ public class WebLogicJMXClient
       }
       catch (IOException ioEx)
       {
-         throw new LifecycleException("Failed to close the connection to the MBean Server.", ioEx);
+         if (configuration.isAdminServer()) {
+            throw new LifecycleException("Failed to close the connection to the MBean Server.", ioEx);
+         } else {
+             // From the Documentation on JMXConnector: "if the connection cannot be closed cleanly. If this exception is
+             // thrown, it is not known whether the server end of the connection has been cleanly closed." Since we're
+             // clearly not a container instance that is known to be an adminServer this exception is meaningless.
+         }
       }
    }
    

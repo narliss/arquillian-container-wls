@@ -88,7 +88,7 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
                 }
                 else {
                     stopServerScript = DEFAULT_WIN_SHUTDOWN_SCRIPT + " " + getServerName() + " t3://" + getListenAddress()
-                            + ":" + getListenPort();
+                            + ":" + getListenPort() + " " + getAdminUserName() + " " + getAdminPassword();
                 }
             } else {
                 if (isAdminServer()) {
@@ -96,7 +96,7 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
                 }
                 else {
                     stopServerScript = DEFAULT_LINUX_SHUTDOWN_SCRIPT + " " + getServerName() + " t3://" + getListenAddress()
-                            + ":" + getListenPort();
+                            + ":" + getListenPort() + " " + getAdminUserName() + " " + getAdminPassword();
                 }
             }
         }

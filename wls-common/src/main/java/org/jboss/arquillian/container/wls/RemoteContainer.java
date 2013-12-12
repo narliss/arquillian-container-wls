@@ -93,7 +93,7 @@ public class RemoteContainer {
 
     private String getDeploymentName(Archive<?> archive) {
         String archiveFilename = archive.getName();
-        int indexOfDot = archiveFilename.indexOf(".");
+        int indexOfDot = archiveFilename.lastIndexOf(".");
         if (indexOfDot != -1) {
             return archiveFilename.substring(0, indexOfDot);
         }
