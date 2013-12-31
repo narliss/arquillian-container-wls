@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.logging.Logger;
 
 import javax.management.*;
@@ -34,6 +35,8 @@ import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.weblogic.api.WebLogicEnterpriseArchive;
 
 /**
  * A JMX client that connects to the Domain Runtime MBean Server
@@ -286,15 +289,26 @@ public class WebLogicJMXClient
       revertToInitialState();
    }
 
-  private void doDeploy(String deploymentName, File deploymentArchive) throws DeploymentException {
+  private void doDeploy(String deploymentName, Archive<?> archive) throws DeploymentException {
     try {
       ObjectName domainRuntime = null;
       domainRuntime = (ObjectName) connection.getAttribute(domainRuntimeService, "DomainRuntime");
       ObjectName deploymentManager = (ObjectName) connection.getAttribute( domainRuntime, "DeploymentManager");
+      File deploymentArchive = ShrinkWrapUtil.toFile(archive);
+
       String target = configuration.getTarget();
 
       Properties props = new Properties();
       props.setProperty("stageMode", "stage");
+
+      if (archive instanceof WebLogicEnterpriseArchive) {
+          WebLogicEnterpriseArchive wlsArchive = (WebLogicEnterpriseArchive) archive;
+          props.setProperty("stageMode", wlsArchive.getStageMode().toString());
+
+          if (wlsArchive.isSharedLibrary()) {
+              props.setProperty("library", "true");
+          }
+      }
 
       ObjectName deploymentProgressObject = (ObjectName) connection.invoke( deploymentManager,
                                                                             "deploy",
@@ -361,7 +375,7 @@ public class WebLogicJMXClient
     * @return A {@link ProtocolMetaData} object containing details of the deployment. 
     * @throws DeploymentException When there is a failure obtaining details of the deployment from the Domain Runtime MBean server.
     */
-   public ProtocolMetaData deploy(String deploymentName, File deploymentArchive) throws DeploymentException
+   public ProtocolMetaData deploy(String deploymentName, Archive<?> deploymentArchive) throws DeploymentException
    {
      doDeploy(deploymentName, deploymentArchive);
 
@@ -374,11 +388,23 @@ public class WebLogicJMXClient
          try
          {
 
-           ProtocolMetaData metadata = new ProtocolMetaData();
-            HTTPContextBuilder builder = new HTTPContextBuilder(deploymentName);
-            HTTPContext httpContext = builder.createContext();
-            HTTPContext context = httpContext;
-            metadata.addContext(context);
+            ProtocolMetaData metadata = new ProtocolMetaData();
+
+            boolean sharedLibrary = false;
+
+             if (deploymentArchive instanceof WebLogicEnterpriseArchive) {
+                WebLogicEnterpriseArchive wlsEar = (WebLogicEnterpriseArchive) deploymentArchive;
+                sharedLibrary = wlsEar.isSharedLibrary();
+            }
+
+            if (!sharedLibrary)
+            {
+                HTTPContextBuilder builder = new HTTPContextBuilder(deploymentName);
+                HTTPContext httpContext = builder.createContext();
+                HTTPContext context = httpContext;
+                metadata.addContext(context);
+            }
+
             return metadata;
          }
          catch (Exception ex)

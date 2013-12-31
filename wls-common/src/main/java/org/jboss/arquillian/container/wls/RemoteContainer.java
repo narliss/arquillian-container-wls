@@ -17,6 +17,7 @@
 package org.jboss.arquillian.container.wls;
 
 import java.io.File;
+import java.util.jar.Manifest;
 
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
@@ -68,10 +69,10 @@ public class RemoteContainer {
      */
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
         String deploymentName = getDeploymentName(archive);
-        File deploymentArchive = ShrinkWrapUtil.toFile(archive);
+//        File deploymentArchive = ShrinkWrapUtil.toFile(archive);
 
 //        deployerClient.deploy(deploymentName, deploymentArchive);
-        ProtocolMetaData metadata = jmxClient.deploy(deploymentName, deploymentArchive);
+        ProtocolMetaData metadata = jmxClient.deploy(deploymentName, archive);
         return metadata;
     }
 
@@ -92,6 +93,18 @@ public class RemoteContainer {
     }
 
     private String getDeploymentName(Archive<?> archive) {
+
+        try {
+            Manifest manifest = new Manifest(archive.get("/META-INF/MANIFEST.MF").getAsset().openStream());
+            String extensionName = manifest.getMainAttributes().getValue("Extension-Name");
+            if (extensionName != null) {
+                return extensionName;
+            }
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
         String archiveFilename = archive.getName();
         int indexOfDot = archiveFilename.lastIndexOf(".");
         if (indexOfDot != -1) {
