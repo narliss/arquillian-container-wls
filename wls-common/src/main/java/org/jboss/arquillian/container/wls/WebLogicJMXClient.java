@@ -426,16 +426,29 @@ public class WebLogicJMXClient
     * @param deploymentName The name of the deployment
     * @throws DeploymentException When there is a failure obtaining details of the deployment from the Domain Runtime MBean server.
     */
-   public void undeploy(String deploymentName) throws DeploymentException
+   public void undeploy(String deploymentName, Archive<?> deploymentArchive) throws DeploymentException
    {
      try {
        ObjectName domainRuntime = null;
        domainRuntime = (ObjectName) connection.getAttribute(domainRuntimeService, "DomainRuntime");
        ObjectName deploymentManager = (ObjectName) connection.getAttribute( domainRuntime, "DeploymentManager");
-       ObjectName appDeploymentRuntime = (ObjectName) connection.invoke(deploymentManager,
+       ObjectName appDeploymentRuntime;
+
+       if (deploymentArchive instanceof WebLogicEnterpriseArchive && ((WebLogicEnterpriseArchive) deploymentArchive).isSharedLibrary())
+       {
+           appDeploymentRuntime = (ObjectName) connection.invoke(deploymentManager,
+                   "lookupLibDeploymentRuntime",
+                   new Object[]{deploymentName},
+                   new String[]{String.class.getName()});
+       }
+       else
+       {
+            appDeploymentRuntime = (ObjectName) connection.invoke(deploymentManager,
                                                                         "lookupAppDeploymentRuntime",
                                                                         new Object[]{deploymentName},
                                                                         new String[]{String.class.getName()});
+       }
+
        ObjectName deploymentProgressObject = (ObjectName) connection.invoke( appDeploymentRuntime,
                                                                              "undeploy",
                                                                              new Object[] {},

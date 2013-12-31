@@ -89,7 +89,7 @@ public class RemoteContainer {
 //        deployerClient.undeploy(deploymentName);
 
         // Verify the undeployment from the Domain Runtime MBean Server.
-        jmxClient.undeploy(deploymentName);
+        jmxClient.undeploy(deploymentName, archive);
     }
 
     private String getDeploymentName(Archive<?> archive) {
