@@ -23,6 +23,7 @@ import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.Node;
 
 /**
  * A utility class for performing operations relevant to a remote WebLogic container used by Arquillian.
@@ -95,10 +96,14 @@ public class RemoteContainer {
     private String getDeploymentName(Archive<?> archive) {
 
         try {
-            Manifest manifest = new Manifest(archive.get("/META-INF/MANIFEST.MF").getAsset().openStream());
-            String extensionName = manifest.getMainAttributes().getValue("Extension-Name");
-            if (extensionName != null) {
-                return extensionName;
+            Node node = archive.get("/META-INF/MANIFEST.MF");
+            if (node != null) {
+                Manifest manifest = new Manifest(node.getAsset().openStream());
+
+                String extensionName = manifest.getMainAttributes().getValue("Extension-Name");
+                if (extensionName != null) {
+                    return extensionName;
+                }
             }
         } catch (Exception e)
         {
