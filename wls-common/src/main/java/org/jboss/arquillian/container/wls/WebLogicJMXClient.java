@@ -299,9 +299,9 @@ public class WebLogicJMXClient
       String target = configuration.getTarget();
 
       Properties props = new Properties();
-      props.setProperty("stageMode", "stage");
+      props.setProperty("stageMode", "STAGE");
 
-      if (archive instanceof WebLogicEnterpriseArchive) {
+        if (archive instanceof WebLogicEnterpriseArchive) {
           WebLogicEnterpriseArchive wlsArchive = (WebLogicEnterpriseArchive) archive;
           props.setProperty("stageMode", wlsArchive.getStageMode().toString());
 
@@ -372,54 +372,71 @@ public class WebLogicJMXClient
     * Verifies and obtains details of the deployment.
     * 
     * @param deploymentName The name of the deployment
-    * @return A {@link ProtocolMetaData} object containing details of the deployment. 
+    * @param deploymentArchive The deployment archive
+    *
+    * @return A {@link ProtocolMetaData} object containing details of the deployment.
     * @throws DeploymentException When there is a failure obtaining details of the deployment from the Domain Runtime MBean server.
     */
    public ProtocolMetaData deploy(String deploymentName, Archive<?> deploymentArchive) throws DeploymentException
    {
      doDeploy(deploymentName, deploymentArchive);
 
-      try
-      {
-         // Store the initial state pre-invocation.
-         stashInitialState();
-         setupState();
-
-         try
-         {
-
-            ProtocolMetaData metadata = new ProtocolMetaData();
-
-            boolean sharedLibrary = false;
-
-             if (deploymentArchive instanceof WebLogicEnterpriseArchive) {
-                WebLogicEnterpriseArchive wlsEar = (WebLogicEnterpriseArchive) deploymentArchive;
-                sharedLibrary = wlsEar.isSharedLibrary();
-            }
-
-            if (!sharedLibrary)
-            {
-                HTTPContextBuilder builder = new HTTPContextBuilder(deploymentName);
-                HTTPContext httpContext = builder.createContext();
-                HTTPContext context = httpContext;
-                metadata.addContext(context);
-            }
-
-            return metadata;
-         }
-         catch (Exception ex)
-         {
-            throw new DeploymentException("Failed to populate the HTTPContext with the deployment details", ex);
-         }
-      }
-      finally
-      {
-         // Reset the state. 
-         revertToInitialState();
-      }
+     return getProtocolMetadata(deploymentName, deploymentArchive);
    }
 
-   /**
+
+    /**
+     * Get the protocol metadata.
+     *
+     * @param deploymentName The name of the deployment
+     * @param deploymentArchive The deployment archive
+     *
+     * @return A {@link ProtocolMetaData} object containing details of the deployment.
+     * @throws DeploymentException When there is a failure obtaining details of the deployment from the Domain Runtime MBean server.
+     */
+    public ProtocolMetaData getProtocolMetadata(String deploymentName, Archive<?> deploymentArchive) throws DeploymentException
+    {
+        try
+        {
+            // Store the initial state pre-invocation.
+            stashInitialState();
+            setupState();
+
+            try
+            {
+
+                ProtocolMetaData metadata = new ProtocolMetaData();
+
+                boolean sharedLibrary = false;
+
+                if (deploymentArchive instanceof WebLogicEnterpriseArchive) {
+                    WebLogicEnterpriseArchive wlsEar = (WebLogicEnterpriseArchive) deploymentArchive;
+                    sharedLibrary = wlsEar.isSharedLibrary();
+                }
+
+                if (!sharedLibrary)
+                {
+                    HTTPContextBuilder builder = new HTTPContextBuilder(deploymentName);
+                    HTTPContext httpContext = builder.createContext();
+                    HTTPContext context = httpContext;
+                    metadata.addContext(context);
+                }
+
+                return metadata;
+            }
+            catch (Exception ex)
+            {
+                throw new DeploymentException("Failed to populate the HTTPContext with the deployment details", ex);
+            }
+        }
+        finally
+        {
+            // Reset the state.
+            revertToInitialState();
+        }
+    }
+
+    /**
     * Verifies that the application was undeployed.
     * We do not want a subsequent deployment with the same name to fail. 
     * 

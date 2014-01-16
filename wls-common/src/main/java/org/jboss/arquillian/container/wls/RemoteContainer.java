@@ -93,7 +93,7 @@ public class RemoteContainer {
         jmxClient.undeploy(deploymentName, archive);
     }
 
-    private String getDeploymentName(Archive<?> archive) {
+    public String getDeploymentName(Archive<?> archive) {
 
         try {
             Node node = archive.get("/META-INF/MANIFEST.MF");
@@ -116,6 +116,16 @@ public class RemoteContainer {
             return archiveFilename.substring(0, indexOfDot);
         }
         return archiveFilename;
+    }
+
+    /**
+     * Return the JMX client.
+     *
+     * @return the JMX client
+     */
+    public WebLogicJMXClient getJmxClient()
+    {
+        return jmxClient;
     }
 
 }
