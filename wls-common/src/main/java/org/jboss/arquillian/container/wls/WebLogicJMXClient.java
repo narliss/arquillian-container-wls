@@ -299,7 +299,7 @@ public class WebLogicJMXClient
       String target = configuration.getTarget();
 
       Properties props = new Properties();
-      props.setProperty("stageMode", "STAGE");
+      props.setProperty("stageMode", "stage");
 
         if (archive instanceof WebLogicEnterpriseArchive) {
           WebLogicEnterpriseArchive wlsArchive = (WebLogicEnterpriseArchive) archive;
