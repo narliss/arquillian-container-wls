@@ -18,6 +18,7 @@ package org.jboss.arquillian.container.wls.remote_10_3;
 
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.test.spi.client.deployment.ProtocolArchiveProcessor;
+import org.jboss.arquillian.container.wls.managed_10_3.WebLogicCDIProcessor;
 import org.jboss.arquillian.core.spi.LoadableExtension;
 
 /**
