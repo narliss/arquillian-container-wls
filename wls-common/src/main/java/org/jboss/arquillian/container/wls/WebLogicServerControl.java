@@ -24,6 +24,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -176,6 +178,12 @@ public class WebLogicServerControl {
                 ProcessBuilder builder = new ProcessBuilder(command);
                 builder.directory(new File(configuration.getDomainDirectory()));
                 builder.environment().put("MW_HOME", configuration.getMiddlewareHome());
+
+                String envVars = configuration.getEnvVars();
+                if (envVars != null && envVars.length() > 0) {
+                    processEnvVars(builder.environment(), configuration.getEnvVars());
+                }
+
                 String jvmOptions = configuration.getJvmOptions();
                 if (jvmOptions != null && jvmOptions.length() > 0) {
                     builder.environment().put("JAVA_OPTIONS", configuration.getJvmOptions());
@@ -198,6 +206,16 @@ public class WebLogicServerControl {
                 return;
             } catch (Exception ex) {
                 throw new LifecycleException("Container startup failed.", ex);
+            }
+        }
+
+        private void processEnvVars(Map<String,String> env, String envVars) {
+            StringTokenizer tokenizer = new StringTokenizer(envVars, ",");
+
+            while (tokenizer.hasMoreTokens()) {
+                String token = tokenizer.nextToken();
+                String[] props = token.split("=");
+                env.put(props[0], props[1]);
             }
         }
 

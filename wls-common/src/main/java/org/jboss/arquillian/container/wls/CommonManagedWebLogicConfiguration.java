@@ -45,6 +45,7 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
     private String startServerScript;
     private String stopServerScript;
     private String serverName;
+    private String envVars;
 
     public CommonManagedWebLogicConfiguration() {
         super();
@@ -226,5 +227,25 @@ public class CommonManagedWebLogicConfiguration extends CommonWebLogicConfigurat
      */
     public String getServerName() {
         return serverName;
+    }
+
+    /**
+     * Set the environment variables to be used when starting weblogic processes
+     *
+     * @param vars  the environment variables to set
+     */
+    public void setEnvVars(String vars)
+    {
+        envVars = vars;
+    }
+
+    /**
+     * Get the environment variables to be used when starting weblogic processes
+     *
+     * @return  the environment variables to be used when starting weblogic processes
+     */
+    public String getEnvVars()
+    {
+        return envVars;
     }
 }
