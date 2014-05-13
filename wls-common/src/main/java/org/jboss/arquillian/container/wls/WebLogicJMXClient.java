@@ -18,10 +18,13 @@ package org.jboss.arquillian.container.wls;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.management.*;
@@ -310,10 +313,63 @@ public class WebLogicJMXClient
           }
       }
 
+      // We need to see if we can upload the classes but we don't want to have a compile time dependency on WLS
+      // jars.
+      Class clazz = null;
+      try
+      {
+        clazz = Class.forName("weblogic.deploy.api.internal.utils.JMXDeployerHelper");
+      } catch(Exception e) {
+        // Error loading the class therefore there's nothing we can do here
+        logger.log(Level.FINEST, "JMXDeployerHelper not found");
+      }
+
+      //Lets upload the file here
+      String uploadedPath = deploymentArchive.getAbsolutePath();
+      if (clazz != null) {
+        Constructor constructor = clazz.getConstructor(JMXConnector.class);
+        Object      instance    = constructor.newInstance(connector);
+
+        //Lets see if we can upload the source now
+        Method upload = instance.getClass().getMethod("uploadSource", new Class[] {String.class,
+                String.class,
+                String.class,
+                String.class,
+                String[].class,
+                String.class
+        });
+
+        try
+        {
+          upload.invoke(instance, configuration.getAdminUrl(), configuration.getAdminUserName(),
+                 configuration.getAdminPassword(), deploymentArchive.getAbsolutePath(), new String[] {}, deploymentName);
+
+          // Find the adminServer
+          ObjectName[] servers = (ObjectName[]) connection.getAttribute(domainRuntimeService, "ServerRuntimes");
+
+          for (int x = 0; x < servers.length; ++x) {
+            if(((Boolean) connection.getAttribute(servers[x], "AdminServer")) == true) {
+              ObjectName adminConfig = (ObjectName) connection.invoke(domainRuntimeService, "findServerConfiguration",
+                new Object[] {connection.getAttribute(servers[x], "Name")},
+                  new String[] {String.class.getName()});
+
+              String adminPath = (String) connection.getAttribute(adminConfig, "UploadDirectoryName");
+
+              uploadedPath = adminPath + File.separator + deploymentName + File.separator + deploymentArchive.getAbsoluteFile().getName();
+            }
+          }
+
+        } catch(Exception e)
+        {
+          logger.log(Level.WARNING, "Failed to upload file to the remote server: " + e.getMessage());
+          e.printStackTrace();
+        }
+      }
+
       ObjectName deploymentProgressObject = (ObjectName) connection.invoke( deploymentManager,
                                                                             "deploy",
                                                                             new Object[] {deploymentName,
-                                                                                    deploymentArchive.getAbsolutePath(),
+                                                                                    uploadedPath,
                                                                                     new String[] {target},
                                                                                     null,
                                                                                     props},
@@ -322,7 +378,8 @@ public class WebLogicJMXClient
                                                                                     String[].class.getName(),
                                                                                     String.class.getName(),
                                                                                     Properties.class.getName()});
-      processDeploymentProgress( deploymentName, deploymentManager, deploymentProgressObject);
+
+      processDeploymentProgress(deploymentName, deploymentManager, deploymentProgressObject);
     } catch (DeploymentException e) {
       throw e;
     } catch (Exception e) {
