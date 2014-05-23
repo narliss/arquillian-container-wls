@@ -70,9 +70,6 @@ public class RemoteContainer {
      */
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
         String deploymentName = getDeploymentName(archive);
-//        File deploymentArchive = ShrinkWrapUtil.toFile(archive);
-
-//        deployerClient.deploy(deploymentName, deploymentArchive);
 
         ProtocolMetaData metadata = null;
         if (configuration.getVersion().equals(CommonWebLogicConfiguration.WLSVersion.WLS_12))
@@ -97,10 +94,16 @@ public class RemoteContainer {
     public void undeploy(Archive<?> archive) throws DeploymentException {
         // Undeploy the application
         String deploymentName = getDeploymentName(archive);
-//        deployerClient.undeploy(deploymentName);
 
-        // Verify the undeployment from the Domain Runtime MBean Server.
-        jmxClient.undeploy(deploymentName, archive);
+        if (configuration.getVersion().equals(CommonWebLogicConfiguration.WLSVersion.WLS_12))
+        {
+            // Verify the undeployment from the Domain Runtime MBean Server.
+            jmxClient.undeploy(deploymentName, archive);
+        }
+        else
+        {
+            deployerClient.undeploy(deploymentName);
+        }
     }
 
     public String getDeploymentName(Archive<?> archive) {
