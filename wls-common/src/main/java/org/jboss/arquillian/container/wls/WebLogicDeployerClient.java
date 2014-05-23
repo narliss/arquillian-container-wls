@@ -27,6 +27,8 @@ import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.wls.CommonWebLogicConfiguration;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.weblogic.api.WebLogicEnterpriseArchive;
 
 /**
  * Utility class that uses Weblogic.Deployer to conduct deployments and undeployments.
@@ -64,15 +66,23 @@ public class WebLogicDeployerClient
     * of the deployment with the AdminServer, via JMX or other means.
     *  
     * @param deploymentName The name of the application to be deployed
-    * @param deploymentArchive The file archive (EAR/WAR) representing the application
+    * @param archive The archive (EAR/WAR) representing the application
     * 
     * @throws DeploymentException When forking of weblogic.Deployer fails,
     * or when interaction with the forked process fails.
     */
-   public void deploy(String deploymentName, File deploymentArchive) throws DeploymentException
+   public void deploy(String deploymentName, Archive<?> archive) throws DeploymentException
    {
-      CommandBuilder builder = new CommandBuilder()
-            .setClassPath(configuration.getClassPath())
+      CommandBuilder builder = new CommandBuilder();
+
+       if (archive instanceof WebLogicEnterpriseArchive)
+       {
+       builder.setSharedLibrary(true);
+       }
+
+       File deploymentArchive = ShrinkWrapUtil.toFile(archive);
+
+       builder.setClassPath(configuration.getClassPath())
             .setAdminUrl(configuration.getAdminUrl())
             .setAdminUserName(configuration.getAdminUserName())
             .setAdminPassword(configuration.getAdminPassword())

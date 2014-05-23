@@ -73,7 +73,17 @@ public class RemoteContainer {
 //        File deploymentArchive = ShrinkWrapUtil.toFile(archive);
 
 //        deployerClient.deploy(deploymentName, deploymentArchive);
-        ProtocolMetaData metadata = jmxClient.deploy(deploymentName, archive);
+
+        ProtocolMetaData metadata = null;
+        if (configuration.getVersion().equals(CommonWebLogicConfiguration.WLSVersion.WLS_12))
+        {
+            metadata = jmxClient.deploy(deploymentName, archive);
+        }
+        else
+        {
+            deployerClient.deploy(deploymentName, archive);
+            metadata = jmxClient.getProtocolMetadata(deploymentName, archive);
+        }
         return metadata;
     }
 

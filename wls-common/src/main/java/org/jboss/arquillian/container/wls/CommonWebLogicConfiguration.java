@@ -88,6 +88,19 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
    private boolean useURandom;
 
    private boolean adminServer = true;
+
+   /**
+    * Enum defining the different weblogic versions currently supported
+    */
+   public enum WLSVersion {
+       WLS_10_3,
+       WLS_12
+   }
+
+   /**
+    * The version of WLS configured to provision
+    */
+   private WLSVersion version;
    
    public void validate() throws ConfigurationException
    {
@@ -561,5 +574,25 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
      */
     public void setAdminServer(boolean adminServer) {
         this.adminServer = adminServer;
+    }
+
+    /**
+     * Set the WLS Version that should be installed and managed.
+     *
+     * @param version
+     */
+    public void setVersion(WLSVersion version)
+    {
+        this.version = version;
+    }
+
+    /**
+     * Return the WLS Version that will be installed and managed.
+     *
+     * @return  the WLS Version that will be installed and managed
+     */
+    public WLSVersion getVersion()
+    {
+        return version;
     }
 }

@@ -12,5 +12,8 @@ import org.jboss.arquillian.container.wls.CommonWebLogicConfiguration;
  */
 public class WebLogicRemoteConfiguration extends CommonWebLogicConfiguration
 {
-
+    public WebLogicRemoteConfiguration()
+    {
+        setVersion(WLSVersion.WLS_10_3);
+    }
 }

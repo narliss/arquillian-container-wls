@@ -36,6 +36,17 @@
         <version.surefire.plugin>2.13</version.surefire.plugin>
     </properties>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>slc01nsb</id>
+            <url>http://slc01nsb.us.oracle.com:8081/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+        <repository>
+            <id>slc01nsb</id>
+            <url>http://slc01nsb.us.oracle.com:8081/artifactory/libs-release-local</url>
+        </repository>
+    </distributionManagement>
+
     <!-- Dependency Management -->
     <dependencyManagement>
         <dependencies>

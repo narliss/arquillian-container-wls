@@ -26,5 +26,8 @@ import org.jboss.arquillian.container.wls.CommonManagedWebLogicConfiguration;
  * 
  */
 public class WebLogicManagedConfiguration extends CommonManagedWebLogicConfiguration {
-
+    public WebLogicManagedConfiguration()
+    {
+        setVersion(WLSVersion.WLS_12);
+    }
 }
