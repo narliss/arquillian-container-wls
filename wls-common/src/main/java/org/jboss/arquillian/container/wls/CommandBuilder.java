@@ -45,6 +45,7 @@ public class CommandBuilder
    private String hostnameVerifierClass;
    private boolean useURandom;
    private boolean sharedLibraray = false;
+   private boolean upload = false;
 
    public CommandBuilder setClassPath(String classPath)
    {
@@ -142,6 +143,12 @@ public class CommandBuilder
        return this;
    }
 
+   public CommandBuilder setUpload(boolean fUpload)
+   {
+       upload = fUpload;
+       return this;
+   }
+
   /**
     * Constructs the commandline to be used for launching weblogic.Deployer
     * to deploy an app.
@@ -209,7 +216,10 @@ public class CommandBuilder
       {
           cmd.add("-library");
       }
-      cmd.add("-upload");
+      if(upload)
+      {
+          cmd.add("-upload");
+      }
       cmd.add("-debug");
       return cmd;
    }

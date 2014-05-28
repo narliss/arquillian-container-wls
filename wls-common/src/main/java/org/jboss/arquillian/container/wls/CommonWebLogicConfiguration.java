@@ -89,6 +89,8 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
 
    private boolean adminServer = true;
 
+   private boolean uploadDeployment = false;
+
    /**
     * Enum defining the different weblogic versions currently supported
     */
@@ -594,5 +596,25 @@ public class CommonWebLogicConfiguration implements ContainerConfiguration
     public WLSVersion getVersion()
     {
         return version;
+    }
+
+    /**
+     * Set the uploadDeployment variable. When this value is set the deployer will attempt to upload the deployment
+     *
+     * @param fUpload  whether to attempt uploading a deployment or not.
+     */
+    public void setUploadDeployment(boolean fUpload)
+    {
+        uploadDeployment = fUpload;
+    }
+
+    /**
+     * Return whether the deployer should attempt to upload a deployment or not.
+     *
+     * @return  whether the deployer should attempt to upload a deployment or not
+     */
+    public boolean isUploadDeployment()
+    {
+        return uploadDeployment;
     }
 }

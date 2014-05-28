@@ -40,6 +40,7 @@ import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaD
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.weblogic.api.WebLogicEnterpriseArchive;
+import org.jboss.shrinkwrap.weblogic.api.WebLogicWebArchive;
 
 /**
  * A JMX client that connects to the Domain Runtime MBean Server
@@ -304,8 +305,16 @@ public class WebLogicJMXClient
       Properties props = new Properties();
       props.setProperty("stageMode", "stage");
 
-        if (archive instanceof WebLogicEnterpriseArchive) {
+      if (archive instanceof WebLogicEnterpriseArchive) {
           WebLogicEnterpriseArchive wlsArchive = (WebLogicEnterpriseArchive) archive;
+          props.setProperty("stageMode", wlsArchive.getStageMode().toString());
+
+          if (wlsArchive.isSharedLibrary()) {
+              props.setProperty("library", "true");
+          }
+      }
+      else if (archive instanceof WebLogicWebArchive) {
+          WebLogicWebArchive wlsArchive = (WebLogicWebArchive) archive;
           props.setProperty("stageMode", wlsArchive.getStageMode().toString());
 
           if (wlsArchive.isSharedLibrary()) {
@@ -326,44 +335,59 @@ public class WebLogicJMXClient
 
       //Lets upload the file here
       String uploadedPath = deploymentArchive.getAbsolutePath();
-      if (clazz != null) {
-        Constructor constructor = clazz.getConstructor(JMXConnector.class);
-        Object      instance    = constructor.newInstance(connector);
+      if (configuration.isUploadDeployment())
+      {
+          if (clazz != null)
+          {
+              Constructor constructor = clazz.getConstructor(JMXConnector.class);
+              Object instance = constructor.newInstance(connector);
 
-        //Lets see if we can upload the source now
-        Method upload = instance.getClass().getMethod("uploadSource", new Class[] {String.class,
-                String.class,
-                String.class,
-                String.class,
-                String[].class,
-                String.class
-        });
+              //Lets see if we can upload the source now
+              Method upload = instance.getClass().getMethod("uploadSource", new Class[]{String.class,
+                      String.class,
+                      String.class,
+                      String.class,
+                      String[].class,
+                      String.class
+              });
 
-        try
-        {
-          upload.invoke(instance, configuration.getAdminUrl(), configuration.getAdminUserName(),
-                 configuration.getAdminPassword(), deploymentArchive.getAbsolutePath(), new String[] {}, deploymentName);
+              try
+              {
+                  upload.invoke(instance, configuration.getAdminUrl(), configuration.getAdminUserName(),
+                          configuration.getAdminPassword(), deploymentArchive.getAbsolutePath(), new String[]{},
+                          deploymentName);
 
-          // Find the adminServer
-          ObjectName[] servers = (ObjectName[]) connection.getAttribute(domainRuntimeService, "ServerRuntimes");
+                  // Find the adminServer
+                  ObjectName[] servers = (ObjectName[]) connection.getAttribute(domainRuntimeService, "ServerRuntimes");
 
-          for (int x = 0; x < servers.length; ++x) {
-            if(((Boolean) connection.getAttribute(servers[x], "AdminServer")) == true) {
-              ObjectName adminConfig = (ObjectName) connection.invoke(domainRuntimeService, "findServerConfiguration",
-                new Object[] {connection.getAttribute(servers[x], "Name")},
-                  new String[] {String.class.getName()});
+                  for (int x = 0; x < servers.length; ++x)
+                  {
+                      if (((Boolean) connection.getAttribute(servers[x], "AdminServer")) == true)
+                      {
+                          ObjectName adminConfig = (ObjectName) connection.invoke(domainRuntimeService,
+                                  "findServerConfiguration",
+                                  new Object[]{connection.getAttribute(servers[x], "Name")},
+                                  new String[]{String.class.getName()});
 
-              String adminPath = (String) connection.getAttribute(adminConfig, "UploadDirectoryName");
+                          String adminPath = (String) connection.getAttribute(adminConfig, "UploadDirectoryName");
 
-              uploadedPath = adminPath + File.separator + deploymentName + File.separator + deploymentArchive.getAbsoluteFile().getName();
-            }
+                          uploadedPath = adminPath + File.separator + deploymentName + File.separator + deploymentArchive
+                                  .getAbsoluteFile()
+                                  .getName();
+                      }
+                  }
+
+              } catch (Exception e)
+              {
+                  logger.log(Level.WARNING, "Failed to upload file to the remote server: " + e.getMessage());
+                  e.printStackTrace();
+              }
           }
-
-        } catch(Exception e)
-        {
-          logger.log(Level.WARNING, "Failed to upload file to the remote server: " + e.getMessage());
-          e.printStackTrace();
-        }
+          else
+          {
+              logger.log(Level.SEVERE, "Cannont upload file to remote server, please ensure that wlfullclient.jar is in your classpath");
+              throw new IllegalStateException("Cannont upload file to remote server, please ensure that wlfullclient.jar is in your classpath");
+          }
       }
 
       ObjectName deploymentProgressObject = (ObjectName) connection.invoke( deploymentManager,
@@ -467,8 +491,9 @@ public class WebLogicJMXClient
                 boolean sharedLibrary = false;
 
                 if (deploymentArchive instanceof WebLogicEnterpriseArchive) {
-                    WebLogicEnterpriseArchive wlsEar = (WebLogicEnterpriseArchive) deploymentArchive;
-                    sharedLibrary = wlsEar.isSharedLibrary();
+                    sharedLibrary = ((WebLogicEnterpriseArchive)deploymentArchive).isSharedLibrary();
+                } else if (deploymentArchive instanceof WebLogicWebArchive) {
+                    sharedLibrary = ((WebLogicWebArchive)deploymentArchive).isSharedLibrary();
                 }
 
                 if (!sharedLibrary)

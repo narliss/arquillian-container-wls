@@ -29,6 +29,7 @@ import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.wls.CommonWebLogicConfiguration;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.weblogic.api.WebLogicEnterpriseArchive;
+import org.jboss.shrinkwrap.weblogic.api.WebLogicWebArchive;
 
 /**
  * Utility class that uses Weblogic.Deployer to conduct deployments and undeployments.
@@ -77,7 +78,10 @@ public class WebLogicDeployerClient
 
        if (archive instanceof WebLogicEnterpriseArchive)
        {
-       builder.setSharedLibrary(true);
+       builder.setSharedLibrary(((WebLogicEnterpriseArchive)archive).isSharedLibrary());
+       } else if (archive instanceof WebLogicWebArchive)
+       {
+           builder.setSharedLibrary(((WebLogicWebArchive)archive).isSharedLibrary());
        }
 
        File deploymentArchive = ShrinkWrapUtil.toFile(archive);
@@ -124,7 +128,8 @@ public class WebLogicDeployerClient
             .setUseJavaStandardTrust(configuration.isUseJavaStandardTrust())
             .setIgnoreHostNameVerification(configuration.isIgnoreHostNameVerification())
             .setHostnameVerifierClass(configuration.getHostnameVerifierClass())
-            .setUseURandom(configuration.isUseURandom());
+            .setUseURandom(configuration.isUseURandom())
+            .setUpload(configuration.isUploadDeployment());
       
       logger.log(Level.INFO, "Starting weblogic.Deployer to undeploy the test artifact.");
       forkWebLogicDeployer(builder.buildUndeployCommand());
